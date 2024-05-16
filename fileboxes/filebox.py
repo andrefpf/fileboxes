@@ -1,5 +1,6 @@
 import json
 from zipfile import ZipFile
+from fileboxes.custom_json_config import CustomJsonEncoder, CustomJsonDecoder
 
 
 class Filebox:
@@ -34,7 +35,7 @@ class Filebox:
             zip.writestr(arcname, data)
 
     def _write_json(self, arcname: str, data: dict | list):
-        json_data = json.dumps(data, indent=2)
+        json_data = json.dumps(data, indent=2, cls=CustomJsonEncoder)
         self._write_string(arcname, json_data)
 
     def _write_image(self, arcname: str, data):
@@ -47,10 +48,10 @@ class Filebox:
 
     def _read_json(self, arcname: str) -> dict | list:
         data = self._read_string(arcname)
-        return json.loads(data)
+        return json.loads(data, cls=CustomJsonDecoder)
 
     def _read_image(self, arcname: str):
         pass
 
     def _get_file_extension(self, arcname: str) -> str:
-        return "txt"
+        return "json"
