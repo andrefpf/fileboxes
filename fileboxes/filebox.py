@@ -43,7 +43,7 @@ class Filebox:
     def _read_string(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
             data = zip.read(arcname)
-        return data
+        return data.decode("utf-8")
 
     def _read_json(self, arcname: str) -> dict | list:
         data = self._read_string(arcname)
