@@ -1,5 +1,5 @@
-from zipfile import ZipFile
 import json
+from zipfile import ZipFile
 
 
 class Filebox:
@@ -10,10 +10,10 @@ class Filebox:
     def write(self, arcname: str, data: dict | list | str):
         if isinstance(data, dict | list):
             return self._write_json(arcname, data)
-        
+
         elif isinstance(data, str):
             return self._write_string(arcname, data)
-        
+
         else:
             raise NotImplementedError(f"Data type {type(data)} not implemented.")
 
