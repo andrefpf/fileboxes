@@ -3,15 +3,16 @@ import json
 
 
 class Filebox:
-    def __init__(self, path):
+    def __init__(self, path, override=True):
         self.path = path
+        self.override = override
 
     def write(self, arcname: str, data: dict | list | str):
         if isinstance(data, dict | list):
-            return self._write_json(data, arcname)
+            return self._write_json(arcname, data)
         
         elif isinstance(data, str):
-            return self._write_string()
+            return self._write_string(arcname, data)
         
         else:
             raise NotImplementedError(f"Data type {type(data)} not implemented.")
@@ -26,7 +27,10 @@ class Filebox:
             return self._read_string(arcname)
 
     def _write_string(self, arcname: str, data: str):
-        with ZipFile(self.path, "w") as zip:
+        mode = "w" if self.override else "a"
+        self.override = False
+
+        with ZipFile(self.path, mode) as zip:
             zip.writestr(arcname, data)
 
     def _write_json(self, arcname: str, data: dict | list):
@@ -38,7 +42,6 @@ class Filebox:
 
     def _read_string(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
-            zip.writestr
             data = zip.read(arcname)
         return data
 
