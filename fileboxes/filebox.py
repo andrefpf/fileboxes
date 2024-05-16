@@ -1,8 +1,12 @@
+from zipfile import ZipFile
+import json
+
+
 class Filebox:
     def __init__(self, path):
-        pass
+        self.path = path
 
-    def write(self, data, arcname: str):
+    def write(self, arcname: str, data: dict | list | str):
         if isinstance(data, dict | list):
             return self._write_json(data, arcname)
         
@@ -13,22 +17,37 @@ class Filebox:
             raise NotImplementedError(f"Data type {type(data)} not implemented.")
 
     def read(self, arcname: str):
-        pass
+        file_extension = self._get_file_extension(arcname)
 
-    def _write_string(self, data: str, arcname: str):
-        pass
+        if file_extension == "json":
+            return self._read_json(arcname)
 
-    def _write_json(self, data: dict | list, arcname: str):
-        pass
+        else:
+            return self._read_string(arcname)
 
-    def _write_image(self, data, arcname: str):
+    def _write_string(self, arcname: str, data: str):
+        with ZipFile(self.path, "w") as zip:
+            zip.writestr(arcname, data)
+
+    def _write_json(self, arcname: str, data: dict | list):
+        json_data = json.dumps(data, indent=2)
+        self._write_string(arcname, json_data)
+
+    def _write_image(self, arcname: str, data):
         pass
 
     def _read_string(self, arcname: str) -> str:
-        pass
+        with ZipFile(self.path, "r") as zip:
+            zip.writestr
+            data = zip.read(arcname)
+        return data
 
     def _read_json(self, arcname: str) -> dict | list:
-        pass 
+        data = self._read_string(arcname)
+        return json.loads(data)
 
     def _read_image(self, arcname: str):
         pass
+
+    def _get_file_extension(self, arcname: str) -> str:
+        return "txt"
