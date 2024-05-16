@@ -26,6 +26,17 @@ class Filebox:
 
         else:
             return self._read_string(arcname)
+    
+    def show_file_structure(self):
+        # TODO: Print the file structure in a nice way like this:
+        # |
+        # |__ Folder
+        # |  |__ File A
+        # |  |__ File B
+        # |
+        # |__ File C
+        # |__ File D
+        pass
 
     def _write_string(self, arcname: str, data: str):
         mode = "w" if self.override else "a"
