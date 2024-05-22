@@ -30,7 +30,7 @@ class Filebox:
         else:
             return self._read_string(arcname)
 
-    def show_content(self):
+    def show_file_structure(self):
         with ZipFile(self.path, "r") as zip:
             stack = [Path(i) for i in zip.namelist()]
 
