@@ -1,6 +1,9 @@
 import json
 from zipfile import ZipFile
 from fileboxes.custom_json_config import CustomJsonEncoder, CustomJsonDecoder
+from treelib import Tree
+from collections import defaultdict
+from pathlib import Path
 
 
 class Filebox:
@@ -26,6 +29,31 @@ class Filebox:
 
         else:
             return self._read_string(arcname)
+
+    def show_content(self):
+        with ZipFile(self.path, "r") as zip:
+            stack = [Path(i) for i in zip.namelist()]
+
+        # Create a tree from bottom-up
+        tree_data = defaultdict(set)
+        while len(stack):
+            path = stack.pop()
+            if path == Path():
+                continue
+            tree_data[path.parent].add(path)
+            stack.append(path.parent)
+
+        # Iterate the tree as top-down
+        tree = Tree()
+        stack = [Path()]
+        tree.create_node(self.path, Path())
+        while len(stack):
+            path = stack.pop()
+            for child in tree_data[path]:
+                tree.create_node(child.name, child, parent=path)
+                stack.append(child)
+
+        return str(tree)
 
     def _write_string(self, arcname: str, data: str):
         mode = "w" if self.override else "a"
