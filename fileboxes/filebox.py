@@ -31,6 +31,9 @@ class Filebox:
             return self._read_string(arcname)
 
     def show_file_structure(self):
+        print(self._file_structure_string())
+
+    def _file_structure_string(self):
         with ZipFile(self.path, "r") as zip:
             stack = [Path(i) for i in zip.namelist()]
 
@@ -54,6 +57,12 @@ class Filebox:
                 stack.append(child)
 
         return str(tree)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        ...
 
     def _write_string(self, arcname: str, data: str):
         mode = "w" if self.override else "a"
