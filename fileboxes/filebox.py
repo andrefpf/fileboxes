@@ -1,6 +1,9 @@
 import json
 from zipfile import ZipFile
 from fileboxes.custom_json_config import CustomJsonEncoder, CustomJsonDecoder
+from treelib import Tree
+from collections import defaultdict
+from pathlib import Path
 
 
 class Filebox:
@@ -26,22 +29,59 @@ class Filebox:
 
         else:
             return self._read_string(arcname)
-    
+        
+    def remove(self, arcname: str):
+        buffer = dict()
+        with ZipFile(self.path, "r") as zip:
+            if arcname not in zip.namelist():
+                return
+            for name in zip.namelist():
+                if name != arcname:
+                    buffer[name] = zip.read(name)
+
+        with ZipFile(self.path, "w") as zip:
+            for name, data in buffer.items():
+                zip.writestr(name, data)
+
     def show_file_structure(self):
-        # TODO: Print the file structure in a nice way like this:
-        # |
-        # |__ Folder
-        # |  |__ File A
-        # |  |__ File B
-        # |
-        # |__ File C
-        # |__ File D
-        pass
+        print(self._file_structure_string())
+
+    def _file_structure_string(self):
+        with ZipFile(self.path, "r") as zip:
+            stack = [Path(i) for i in zip.namelist()]
+
+        # Create a tree from bottom-up
+        tree_data = defaultdict(set)
+        while len(stack):
+            path = stack.pop()
+            if path == Path():
+                continue
+            tree_data[path.parent].add(path)
+            stack.append(path.parent)
+
+        # Iterate the tree as top-down
+        tree = Tree()
+        stack = [Path()]
+        tree.create_node(self.path, Path())
+        while len(stack):
+            path = stack.pop()
+            for child in tree_data[path]:
+                tree.create_node(child.name, child, parent=path)
+                stack.append(child)
+
+        return str(tree)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        ...
 
     def _write_string(self, arcname: str, data: str):
         mode = "w" if self.override else "a"
         self.override = False
 
+        self.remove(arcname)
         with ZipFile(self.path, mode) as zip:
             zip.writestr(arcname, data)
 
