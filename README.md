@@ -1,6 +1,9 @@
-# Fileboxes
-Fileboxes is a python tool to simplify project files.
+<div align="center">
+  <img width="100" src="data/logo.png" alt="ExpiraBot Logo" align="center">
+</div>
+<h1 align="center" style="margin-top: 20px;"> Fileboxes </h1>
 
+# Why it exists? 
 A common feature in most popular software is to allow the user to save the project in a file to continue the work latter or to send it to someone.
 If you find yourself in the position to create the said file you may have found the following solutions (and associated problems):
 - Create a single JSON file with all the configurations needed
