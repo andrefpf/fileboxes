@@ -29,6 +29,19 @@ class Filebox:
 
         else:
             return self._read_string(arcname)
+        
+    def remove(self, arcname: str):
+        buffer = dict()
+        with ZipFile(self.path, "r") as zip:
+            if arcname not in zip.namelist():
+                return
+            for name in zip.namelist():
+                if name != arcname:
+                    buffer[name] = zip.read(name)
+
+        with ZipFile(self.path, "w") as zip:
+            for name, data in buffer.items():
+                zip.writestr(name, data)
 
     def show_file_structure(self):
         print(self._file_structure_string())
@@ -68,6 +81,7 @@ class Filebox:
         mode = "w" if self.override else "a"
         self.override = False
 
+        self.remove(arcname)
         with ZipFile(self.path, mode) as zip:
             zip.writestr(arcname, data)
 
