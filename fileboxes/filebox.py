@@ -1,4 +1,5 @@
 import json
+import os
 from zipfile import ZipFile
 from fileboxes.custom_json_config import CustomJsonEncoder, CustomJsonDecoder
 from treelib import Tree
@@ -12,11 +13,16 @@ class Filebox:
         self.override = override
 
     def write(self, arcname: str, data: dict | list | str):
+        file_extension = self._get_file_extension(arcname)
+
         if isinstance(data, dict | list):
             return self._write_json(arcname, data)
 
         elif isinstance(data, str):
             return self._write_string(arcname, data)
+        
+        elif file_extension in ["jpeg", "png"]:
+            return self._write_image(arcname, data)
 
         else:
             raise NotImplementedError(f"Data type {type(data)} not implemented.")
@@ -90,7 +96,10 @@ class Filebox:
         self._write_string(arcname, json_data)
 
     def _write_image(self, arcname: str, data):
-        pass
+        path = data
+        if os.path.isfile(path):
+            with ZipFile(self.path, "w") as zip:
+                zip.write(path, arcname)
 
     def _read_string(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
@@ -105,4 +114,11 @@ class Filebox:
         pass
 
     def _get_file_extension(self, arcname: str) -> str:
-        return "json"
+        if "json" in arcname:
+            return "json"
+        
+        elif "png" in arcname:
+            return "png"
+
+        elif "jpeg" in arcname:
+            return "jpeg"
