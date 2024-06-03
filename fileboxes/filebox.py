@@ -16,11 +16,11 @@ class Filebox:
         self.path = path
         self.override = override
 
-    def write(self, arcname: str, data: dict | list | str):
+    def write(self, arcname: str, data: dict | list | str| Image.Image):
         if isinstance(data, dict | list):
             return self._write_json(arcname, data)
 
-        elif ".png" in data or ".jpeg" in data:
+        elif isinstance(data, Image.Image):
             return self._write_image(arcname, data)
 
         elif isinstance(data, str):
@@ -30,17 +30,29 @@ class Filebox:
             raise NotImplementedError(f"Data type {type(data)} not implemented.")
 
     def read(self, arcname: str):
-        file_extension = self._get_file_extension(arcname)
+        file_extension = Path(arcname).suffix
 
-        if file_extension == "json":
-            return self._read_json(arcname)
-    
-        elif file_extension in ["png", "jpeg"]:
-            return self._read_image(arcname)
+        if file_extension is not None:
+            if file_extension == "json":
+                return self._read_json(arcname)
 
+            elif file_extension in ["png", "jpeg"]:
+                return self._read_image(arcname)
+
+            else:
+                return self._read_string(arcname)
         else:
-            return self._read_string(arcname)
-        
+            file_extension = self._get_file_extension(arcname)
+
+            if file_extension == "json":
+                return self._read_json(arcname)
+
+            elif file_extension in ["png", "jpeg"]:
+                return self._read_image(arcname)
+
+            else:
+                return self._read_string(arcname)
+            
     def remove(self, arcname: str):
         buffer = dict()
         with ZipFile(self.path, "r") as zip:
@@ -102,14 +114,13 @@ class Filebox:
         json_data = json.dumps(data, indent=2, cls=CustomJsonEncoder)
         self._write_string(arcname, json_data)
 
-    def _write_image(self, arcname: str, data):
-        image_path = data
-        if os.path.isfile(image_path):
-            with open(image_path, "rb") as image_file:
-                image_data = image_file.read()
-            
-            image_buffer = BytesIO(image_data)
-            self._write_string(arcname, image_buffer.getvalue())
+    def _write_image(self, arcname: str, data: Image.Image):
+        image_format = data.format
+        image_bytes_io = BytesIO()
+        data.save(image_bytes_io, format=image_format)
+        image_data = image_bytes_io.getvalue()
+
+        self._write_string(arcname, image_data)
             
     def _read_string(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
@@ -120,26 +131,36 @@ class Filebox:
         data = self._read_string(arcname)
         return json.loads(data, cls=CustomJsonDecoder)
 
-    def _read_image(self, arcname: str):
+    def _read_image(self, arcname: str) -> Image.Image:
         with ZipFile(self.path, "r") as zip:
             image_data = zip.read(arcname)
 
-            image_buffer = BytesIO(image_data)
-            return Image.open(image_buffer)
+        image_buffer = BytesIO(image_data)
+        return Image.open(image_buffer)
+
+    def _get_image_extension(self, arcname: str) -> str:
+        with ZipFile(self.path, "r") as zip:
+            file_data= zip.read(arcname)
+        return imghdr.what(None, h=file_data)
+    
+    def _get_json_extension(self, arcname: str) -> str:
+        with ZipFile(self.path, "r") as zip:
+            file_data= zip.read(arcname)
+
+        try:
+            json.loads(file_data)
+            return "json"
+        except json.JSONDecodeError:
+            return
 
     def _get_file_extension(self, arcname: str) -> str:
-        with ZipFile(self.path, "r") as zip:
-            with zip.open(arcname, "r") as file:
-                file_data= file.read()
-        
-        file_extension = imghdr.what(None, h=file_data)
+        file_extension = self._get_file_extension(arcname)
 
         if file_extension in ["png", "jpeg"]:
             return file_extension
         
-        try:
-            json.loads(file_data)
-            return "json"
+        file_extension = self._get_json_extension(arcname)
+        return file_extension
         
-        except json.JSONDecodeError:
-            return
+        
+    
