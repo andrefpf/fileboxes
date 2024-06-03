@@ -1,10 +1,14 @@
 import json
 import os
+import imghdr
 from zipfile import ZipFile
 from fileboxes.custom_json_config import CustomJsonEncoder, CustomJsonDecoder
 from treelib import Tree
 from collections import defaultdict
 from pathlib import Path
+from io import BytesIO
+from PIL import Image
+
 
 
 class Filebox:
@@ -13,16 +17,14 @@ class Filebox:
         self.override = override
 
     def write(self, arcname: str, data: dict | list | str):
-        file_extension = self._get_file_extension(arcname)
-
         if isinstance(data, dict | list):
             return self._write_json(arcname, data)
 
+        elif ".png" in data or ".jpeg" in data:
+            return self._write_image(arcname, data)
+
         elif isinstance(data, str):
             return self._write_string(arcname, data)
-        
-        elif file_extension in ["jpeg", "png"]:
-            return self._write_image(arcname, data)
 
         else:
             raise NotImplementedError(f"Data type {type(data)} not implemented.")
@@ -32,6 +34,9 @@ class Filebox:
 
         if file_extension == "json":
             return self._read_json(arcname)
+    
+        elif file_extension in ["png", "jpeg"]:
+            return self._read_image(arcname)
 
         else:
             return self._read_string(arcname)
@@ -87,7 +92,9 @@ class Filebox:
         mode = "w" if self.override else "a"
         self.override = False
 
-        self.remove(arcname)
+        if os.path.exists(self.path):
+            self.remove(arcname)
+
         with ZipFile(self.path, mode) as zip:
             zip.writestr(arcname, data)
 
@@ -96,11 +103,14 @@ class Filebox:
         self._write_string(arcname, json_data)
 
     def _write_image(self, arcname: str, data):
-        path = data
-        if os.path.isfile(path):
-            with ZipFile(self.path, "w") as zip:
-                zip.write(path, arcname)
-
+        image_path = data
+        if os.path.isfile(image_path):
+            with open(image_path, "rb") as image_file:
+                image_data = image_file.read()
+            
+            image_buffer = BytesIO(image_data)
+            self._write_string(arcname, image_buffer.getvalue())
+            
     def _read_string(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
             data = zip.read(arcname)
@@ -111,14 +121,25 @@ class Filebox:
         return json.loads(data, cls=CustomJsonDecoder)
 
     def _read_image(self, arcname: str):
-        pass
+        with ZipFile(self.path, "r") as zip:
+            image_data = zip.read(arcname)
+
+            image_buffer = BytesIO(image_data)
+            return Image.open(image_buffer)
 
     def _get_file_extension(self, arcname: str) -> str:
-        if "json" in arcname:
+        with ZipFile(self.path, "r") as zip:
+            with zip.open(arcname, "r") as file:
+                file_data= file.read()
+        
+        file_extension = imghdr.what(None, h=file_data)
+
+        if file_extension in ["png", "jpeg"]:
+            return file_extension
+        
+        try:
+            json.loads(file_data)
             return "json"
         
-        elif "png" in arcname:
-            return "png"
-
-        elif "jpeg" in arcname:
-            return "jpeg"
+        except json.JSONDecodeError:
+            return
