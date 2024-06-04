@@ -16,7 +16,7 @@ class Filebox:
         self.path = path
         self.override = override
 
-    def write(self, arcname: str, data: dict | list | str| Image.Image):
+    def write(self, arcname: str, data: dict | list | str | Image.Image):
         if isinstance(data, dict | list):
             return self._write_json(arcname, data)
 
@@ -32,26 +32,17 @@ class Filebox:
     def read(self, arcname: str):
         file_extension = Path(arcname).suffix
 
-        if file_extension is not None:
-            if file_extension == "json":
-                return self._read_json(arcname)
-
-            elif file_extension in ["png", "jpeg"]:
-                return self._read_image(arcname)
-
-            else:
-                return self._read_string(arcname)
-        else:
+        if not file_extension:
             file_extension = self._get_file_extension(arcname)
 
-            if file_extension == "json":
-                return self._read_json(arcname)
+        if file_extension == ".json":
+            return self._read_json(arcname)
 
-            elif file_extension in ["png", "jpeg"]:
-                return self._read_image(arcname)
+        elif file_extension in [".png", ".jpeg"]:
+            return self._read_image(arcname)
 
-            else:
-                return self._read_string(arcname)
+        else:
+            return self._read_string(arcname)
             
     def remove(self, arcname: str):
         buffer = dict()
@@ -141,7 +132,11 @@ class Filebox:
     def _get_image_extension(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
             file_data= zip.read(arcname)
-        return imghdr.what(None, h=file_data)
+        file_extension = imghdr.what(None, h=file_data)
+
+        if file_extension:
+            return "." + file_extension
+        return
     
     def _get_json_extension(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
@@ -149,14 +144,14 @@ class Filebox:
 
         try:
             json.loads(file_data)
-            return "json"
+            return ".json"
         except json.JSONDecodeError:
             return
 
     def _get_file_extension(self, arcname: str) -> str:
-        file_extension = self._get_file_extension(arcname)
+        file_extension = self._get_image_extension(arcname)
 
-        if file_extension in ["png", "jpeg"]:
+        if file_extension in [".png", ".jpeg"]:
             return file_extension
         
         file_extension = self._get_json_extension(arcname)
