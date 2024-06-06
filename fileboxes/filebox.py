@@ -38,7 +38,7 @@ class Filebox:
         if file_extension == ".json":
             return self._read_json(arcname)
 
-        elif file_extension in [".png", ".jpeg"]:
+        elif file_extension in [".png", ".jpeg", ".jpg"]:
             return self._read_image(arcname)
 
         else:
