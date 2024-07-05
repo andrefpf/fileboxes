@@ -44,7 +44,7 @@ class Filebox:
         elif file_extension == ".config":
             return self._read_configparser(arcname)
 
-        elif file_extension in [".png", ".jpeg"]:
+        elif file_extension in [".png", ".jpeg", ".jpg"]:
             return self._read_image(arcname)
 
         else:
