@@ -6,9 +6,9 @@ from fileboxes.custom_json_config import CustomJsonEncoder, CustomJsonDecoder
 from treelib import Tree
 from collections import defaultdict
 from pathlib import Path
-from io import BytesIO
+from io import BytesIO, StringIO
 from PIL import Image
-
+from configparser import ConfigParser
 
 
 class Filebox:
@@ -26,6 +26,9 @@ class Filebox:
         elif isinstance(data, str):
             return self._write_string(arcname, data)
 
+        elif isinstance(data, ConfigParser):
+            return self._write_configparser(arcname, data)
+
         else:
             raise NotImplementedError(f"Data type {type(data)} not implemented.")
 
@@ -37,6 +40,9 @@ class Filebox:
 
         if file_extension == ".json":
             return self._read_json(arcname)
+    
+        elif file_extension == ".config":
+            return self._read_configparser(arcname)
 
         elif file_extension in [".png", ".jpeg"]:
             return self._read_image(arcname)
@@ -112,7 +118,13 @@ class Filebox:
         image_data = image_bytes_io.getvalue()
 
         self._write_string(arcname, image_data)
-            
+
+    def _write_configparser(self, arcname: str, data: ConfigParser):
+        config_bytes_io = StringIO()
+        data.write(config_bytes_io)
+        config_data = config_bytes_io.getvalue()
+        self._write_string(arcname, config_data)
+
     def _read_string(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
             data = zip.read(arcname)
@@ -128,6 +140,12 @@ class Filebox:
 
         image_buffer = BytesIO(image_data)
         return Image.open(image_buffer)
+
+    def _read_configparser(self, arcname: str):
+        config_string = self._read_string(arcname)
+        config = ConfigParser()
+        config.read_string(config_string)
+        return config        
 
     def _get_image_extension(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
