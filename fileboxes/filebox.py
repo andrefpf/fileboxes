@@ -8,7 +8,7 @@ from collections import defaultdict
 from pathlib import Path
 from io import BytesIO, StringIO
 from PIL import Image
-from configparser import ConfigParser
+from configparser import ConfigParser, MissingSectionHeaderError
 
 
 class Filebox:
@@ -41,7 +41,7 @@ class Filebox:
         if file_extension == ".json":
             return self._read_json(arcname)
     
-        elif file_extension == ".config":
+        elif file_extension in [".config", ".dat"]:
             return self._read_configparser(arcname)
 
         elif file_extension in [".png", ".jpeg", ".jpg"]:
@@ -141,11 +141,14 @@ class Filebox:
         image_buffer = BytesIO(image_data)
         return Image.open(image_buffer)
 
-    def _read_configparser(self, arcname: str):
+    def _read_configparser(self, arcname: str) -> ConfigParser | None:
         config_string = self._read_string(arcname)
         config = ConfigParser()
-        config.read_string(config_string)
-        return config        
+        try:
+            config.read_string(config_string)
+            return config        
+        except MissingSectionHeaderError:
+            return None
 
     def _get_image_extension(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
