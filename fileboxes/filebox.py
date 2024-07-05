@@ -9,6 +9,7 @@ from pathlib import Path
 from io import BytesIO, StringIO
 from PIL import Image
 from configparser import ConfigParser, MissingSectionHeaderError
+import numpy as np
 
 
 class Filebox:
@@ -65,6 +66,16 @@ class Filebox:
 
     def show_file_structure(self):
         print(self._file_structure_string())
+
+    def write_array(self, arcname: str, data: np.ndarray, delimiter=";", *args, **kwargs):
+        file = BytesIO()
+        np.savetxt(file, data, *args, delimiter=delimiter, **kwargs)
+        self._write_string(arcname, file.getvalue().decode())
+
+    def read_array(self, arcname: str, delimiter=";", *args, **kwargs):
+        data = self._read_string(arcname)
+        file = BytesIO(data)
+        return np.loadtxt(file, *args, delimiter=delimiter, **kwargs)
 
     def _file_structure_string(self):
         with ZipFile(self.path, "r") as zip:
