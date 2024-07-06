@@ -1,5 +1,4 @@
 import json
-import os
 import imghdr
 from zipfile import ZipFile
 from fileboxes.custom_json_config import CustomJsonEncoder, CustomJsonDecoder
@@ -14,7 +13,7 @@ import numpy as np
 
 class Filebox:
     def __init__(self, path, override=True):
-        self.path = path
+        self.path = Path(path)
         self.override = override
 
     def write(self, arcname: str, data: dict | list | str | Image.Image):
@@ -72,7 +71,7 @@ class Filebox:
         mode = "w" if self.override else "a"
         self.override = False
 
-        if os.path.exists(self.path):
+        if self.path.exists():
             self.remove(arcname)
 
         with ZipFile(self.path, mode) as zip:
@@ -108,9 +107,8 @@ class Filebox:
         self.write_string(arcname, file_data)
 
     # Explicit reads
-    def read_string(self, arcname: str) -> str:
-
-        if not os.path.exists(self.path):
+    def read_string(self, arcname: str) -> str | None:
+        if not self.path.exists():
             return None
 
         with ZipFile(self.path, "r") as zip:
@@ -119,13 +117,19 @@ class Filebox:
             data = zip.read(arcname)
             return data.decode("utf-8")
 
-    def read_json(self, arcname: str) -> dict | list:
+    def read_json(self, arcname: str) -> dict | list | None:
+        if not self.path.exists():
+            return None
+
         data = self.read_string(arcname)
         if data is None:
             return None
         return json.loads(data, cls=CustomJsonDecoder)
 
-    def read_image(self, arcname: str) -> Image.Image:
+    def read_image(self, arcname: str) -> Image.Image | None:
+        if not self.path.exists():
+            return None
+
         with ZipFile(self.path, "r") as zip:
             image_data = zip.read(arcname)
 
@@ -133,6 +137,8 @@ class Filebox:
         return Image.open(image_buffer)
 
     def read_configparser(self, arcname: str) -> ConfigParser | None:
+        if not self.path.exists():
+            return None
 
         config_string = self.read_string(arcname)
         if config_string is None:
@@ -146,6 +152,9 @@ class Filebox:
             return None
 
     def read_array(self, arcname: str, delimiter=";", *args, **kwargs):
+        if not self.path.exists():
+            return None
+
         data = self.read_string(arcname)
         if data is None:
             return None
@@ -153,6 +162,9 @@ class Filebox:
         return np.loadtxt(file, *args, delimiter=delimiter, **kwargs)
 
     def read_to_path(self, arcname: str, path: str | Path):
+        if not self.path.exists():
+            return None
+
         path = Path(path)
         file_data = self.read_string(arcname)
         with open(path, "w") as file:
