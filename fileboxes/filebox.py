@@ -74,6 +74,8 @@ class Filebox:
 
     def read_array(self, arcname: str, delimiter=";", *args, **kwargs):
         data = self._read_string(arcname)
+        if data is None:
+            return None
         file = BytesIO(data)
         return np.loadtxt(file, *args, delimiter=delimiter, **kwargs)
 
@@ -137,6 +139,10 @@ class Filebox:
         self._write_string(arcname, config_data)
 
     def _read_string(self, arcname: str) -> str:
+
+        if not os.path.exists(self.path):
+            return None
+
         with ZipFile(self.path, "r") as zip:
             if not arcname in zip.namelist():
                 return None
@@ -157,7 +163,11 @@ class Filebox:
         return Image.open(image_buffer)
 
     def _read_configparser(self, arcname: str) -> ConfigParser | None:
+
         config_string = self._read_string(arcname)
+        if config_string is None:
+            return None
+
         config = ConfigParser()
         try:
             config.read_string(config_string)
