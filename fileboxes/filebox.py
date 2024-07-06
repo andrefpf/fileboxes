@@ -63,6 +63,14 @@ class Filebox:
             for name, data in buffer.items():
                 zip.writestr(name, data)
 
+    def contains(self, arcname: str) -> bool:
+        if not self.path.exists():
+            return False
+
+        with ZipFile(self.path, "r") as zip:
+            _contains = arcname in zip.namelist()
+        return _contains
+
     def show_file_structure(self):
         print(self._file_structure_string())
     
@@ -195,12 +203,6 @@ class Filebox:
 
         return str(tree)
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args, **kwargs):
-        ...
-
     def _get_image_extension(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
             file_data= zip.read(arcname)
@@ -228,6 +230,13 @@ class Filebox:
         
         file_extension = self._get_json_extension(arcname)
         return file_extension
-        
-        
-    
+
+    # Dunder methods
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        ...
+
+    def __contains__(self, arcname: str):
+        return self.contains(arcname)
