@@ -19,16 +19,16 @@ class Filebox:
 
     def write(self, arcname: str, data: dict | list | str | Image.Image):
         if isinstance(data, dict | list):
-            return self._write_json(arcname, data)
+            return self.write_json(arcname, data)
 
         elif isinstance(data, Image.Image):
-            return self._write_image(arcname, data)
+            return self.write_image(arcname, data)
 
         elif isinstance(data, str):
-            return self._write_string(arcname, data)
+            return self.write_string(arcname, data)
 
         elif isinstance(data, ConfigParser):
-            return self._write_configparser(arcname, data)
+            return self.write_configparser(arcname, data)
 
         else:
             raise NotImplementedError(f"Data type {type(data)} not implemented.")
@@ -40,16 +40,16 @@ class Filebox:
             file_extension = self._get_file_extension(arcname)
 
         if file_extension == ".json":
-            return self._read_json(arcname)
+            return self.read_json(arcname)
     
         elif file_extension in [".config", ".dat"]:
-            return self._read_configparser(arcname)
+            return self.read_configparser(arcname)
 
         elif file_extension in [".png", ".jpeg", ".jpg"]:
-            return self._read_image(arcname)
+            return self.read_image(arcname)
 
         else:
-            return self._read_string(arcname)
+            return self.read_string(arcname)
             
     def remove(self, arcname: str):
         buffer = dict()
@@ -66,18 +66,97 @@ class Filebox:
 
     def show_file_structure(self):
         print(self._file_structure_string())
+    
+    # Explicit writes
+    def write_string(self, arcname: str, data: str):
+        mode = "w" if self.override else "a"
+        self.override = False
+
+        if os.path.exists(self.path):
+            self.remove(arcname)
+
+        with ZipFile(self.path, mode) as zip:
+            zip.writestr(arcname, data)
+
+    def write_json(self, arcname: str, data: dict | list):
+        json_data = json.dumps(data, indent=2, cls=CustomJsonEncoder)
+        self.write_string(arcname, json_data)
+
+    def write_image(self, arcname: str, data: Image.Image):
+        image_format = data.format
+        image_bytes_io = BytesIO()
+        data.save(image_bytes_io, format=image_format)
+        image_data = image_bytes_io.getvalue()
+
+        self.write_string(arcname, image_data)
+
+    def write_configparser(self, arcname: str, data: ConfigParser):
+        config_bytes_io = StringIO()
+        data.write(config_bytes_io)
+        config_data = config_bytes_io.getvalue()
+        self.write_string(arcname, config_data)
 
     def write_array(self, arcname: str, data: np.ndarray, delimiter=";", *args, **kwargs):
         file = BytesIO()
         np.savetxt(file, data, *args, delimiter=delimiter, **kwargs)
-        self._write_string(arcname, file.getvalue().decode())
+        self.write_string(arcname, file.getvalue().decode())
+
+    def write_from_path(self, arcname: str, path: str | Path):
+        path = Path(path)
+        with open(path, "r") as file:
+            file_data = file.read()
+        self.write_string(arcname, file_data)
+
+    # Explicit reads
+    def read_string(self, arcname: str) -> str:
+
+        if not os.path.exists(self.path):
+            return None
+
+        with ZipFile(self.path, "r") as zip:
+            if not arcname in zip.namelist():
+                return None
+            data = zip.read(arcname)
+            return data.decode("utf-8")
+
+    def read_json(self, arcname: str) -> dict | list:
+        data = self.read_string(arcname)
+        if data is None:
+            return None
+        return json.loads(data, cls=CustomJsonDecoder)
+
+    def read_image(self, arcname: str) -> Image.Image:
+        with ZipFile(self.path, "r") as zip:
+            image_data = zip.read(arcname)
+
+        image_buffer = BytesIO(image_data)
+        return Image.open(image_buffer)
+
+    def read_configparser(self, arcname: str) -> ConfigParser | None:
+
+        config_string = self.read_string(arcname)
+        if config_string is None:
+            return None
+
+        config = ConfigParser()
+        try:
+            config.read_string(config_string)
+            return config        
+        except MissingSectionHeaderError:
+            return None
 
     def read_array(self, arcname: str, delimiter=";", *args, **kwargs):
-        data = self._read_string(arcname)
+        data = self.read_string(arcname)
         if data is None:
             return None
         file = BytesIO(data)
         return np.loadtxt(file, *args, delimiter=delimiter, **kwargs)
+
+    def read_to_path(self, arcname: str, path: str | Path):
+        path = Path(path)
+        file_data = self.read_string(arcname)
+        with open(path, "w") as file:
+            file.write(file_data)
 
     def _file_structure_string(self):
         with ZipFile(self.path, "r") as zip:
@@ -109,71 +188,6 @@ class Filebox:
 
     def __exit__(self, *args, **kwargs):
         ...
-
-    def _write_string(self, arcname: str, data: str):
-        mode = "w" if self.override else "a"
-        self.override = False
-
-        if os.path.exists(self.path):
-            self.remove(arcname)
-
-        with ZipFile(self.path, mode) as zip:
-            zip.writestr(arcname, data)
-
-    def _write_json(self, arcname: str, data: dict | list):
-        json_data = json.dumps(data, indent=2, cls=CustomJsonEncoder)
-        self._write_string(arcname, json_data)
-
-    def _write_image(self, arcname: str, data: Image.Image):
-        image_format = data.format
-        image_bytes_io = BytesIO()
-        data.save(image_bytes_io, format=image_format)
-        image_data = image_bytes_io.getvalue()
-
-        self._write_string(arcname, image_data)
-
-    def _write_configparser(self, arcname: str, data: ConfigParser):
-        config_bytes_io = StringIO()
-        data.write(config_bytes_io)
-        config_data = config_bytes_io.getvalue()
-        self._write_string(arcname, config_data)
-
-    def _read_string(self, arcname: str) -> str:
-
-        if not os.path.exists(self.path):
-            return None
-
-        with ZipFile(self.path, "r") as zip:
-            if not arcname in zip.namelist():
-                return None
-            data = zip.read(arcname)
-            return data.decode("utf-8")
-
-    def _read_json(self, arcname: str) -> dict | list:
-        data = self._read_string(arcname)
-        if data is None:
-            return None
-        return json.loads(data, cls=CustomJsonDecoder)
-
-    def _read_image(self, arcname: str) -> Image.Image:
-        with ZipFile(self.path, "r") as zip:
-            image_data = zip.read(arcname)
-
-        image_buffer = BytesIO(image_data)
-        return Image.open(image_buffer)
-
-    def _read_configparser(self, arcname: str) -> ConfigParser | None:
-
-        config_string = self._read_string(arcname)
-        if config_string is None:
-            return None
-
-        config = ConfigParser()
-        try:
-            config.read_string(config_string)
-            return config        
-        except MissingSectionHeaderError:
-            return None
 
     def _get_image_extension(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
