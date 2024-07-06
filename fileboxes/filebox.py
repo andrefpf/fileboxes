@@ -138,11 +138,15 @@ class Filebox:
 
     def _read_string(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
+            if not arcname in zip.namelist():
+                return None
             data = zip.read(arcname)
-        return data.decode("utf-8")
+            return data.decode("utf-8")
 
     def _read_json(self, arcname: str) -> dict | list:
         data = self._read_string(arcname)
+        if data is None:
+            return None
         return json.loads(data, cls=CustomJsonDecoder)
 
     def _read_image(self, arcname: str) -> Image.Image:
