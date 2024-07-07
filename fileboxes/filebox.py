@@ -111,7 +111,7 @@ class Filebox:
     def write_from_path(self, arcname: str, path: str | Path, encoding="utf8"):
         path = Path(path)
         with open(path, "r", encoding=encoding) as file:
-            file_data = file.read(encoding="utf8")
+            file_data = file.read()
         self.write_string(arcname, file_data)
 
     # Explicit reads
