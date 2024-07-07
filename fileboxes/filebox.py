@@ -108,14 +108,14 @@ class Filebox:
         np.savetxt(file, data, *args, delimiter=delimiter, **kwargs)
         self.write_string(arcname, file.getvalue().decode())
 
-    def write_from_path(self, arcname: str, path: str | Path):
+    def write_from_path(self, arcname: str, path: str | Path, encoding="utf8"):
         path = Path(path)
-        with open(path, "r") as file:
-            file_data = file.read()
+        with open(path, "r", encoding=encoding) as file:
+            file_data = file.read(encoding="utf8")
         self.write_string(arcname, file_data)
 
     # Explicit reads
-    def read_string(self, arcname: str) -> str | None:
+    def read_string(self, arcname: str, encoding="utf8") -> str | None:
         if not self.path.exists():
             return None
 
@@ -123,7 +123,7 @@ class Filebox:
             if not arcname in zip.namelist():
                 return None
             data = zip.read(arcname)
-            return data.decode("utf-8")
+        return data.decode(encoding=encoding)
 
     def read_json(self, arcname: str) -> dict | list | None:
         if not self.path.exists():
@@ -169,13 +169,13 @@ class Filebox:
         file = BytesIO(data)
         return np.loadtxt(file, *args, delimiter=delimiter, **kwargs)
 
-    def read_to_path(self, arcname: str, path: str | Path):
+    def read_to_path(self, arcname: str, path: str | Path, encoding="utf8"):
         if not self.path.exists():
             return None
 
         path = Path(path)
-        file_data = self.read_string(arcname)
-        with open(path, "w") as file:
+        file_data = self.read_string(arcname, encoding=encoding)
+        with open(path, "w", encoding=encoding) as file:
             file.write(file_data)
 
     def _file_structure_string(self):
