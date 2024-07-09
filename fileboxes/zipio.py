@@ -18,6 +18,8 @@ class ZipIO(io.IOBase):
         self._zip.close()
     
     def write(self, buffer: str | bytes) -> int:
+        if isinstance(buffer, str):
+            buffer = buffer.encode()
         return self._file.write(buffer)
 
     def read(self, size: int | None = None):
