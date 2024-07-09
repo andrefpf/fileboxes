@@ -1,9 +1,11 @@
-from io import IOBase, BytesIO
+# from io import IOBase, BytesIO
+import io
 from pathlib import Path
 from zipfile import ZipFile
+from zipfile import *
 
 
-class ZipIO(IOBase):
+class ZipIO(io.IOBase):
     def __init__(self, path: str | Path, arcname: str, mode: str = "r") -> None:
         self.path = path
         self.arcname = arcname
@@ -24,9 +26,6 @@ class ZipIO(IOBase):
 
     def readline(self) -> None:
         return self._file.readline()
-    
-    def seek(self, offset, whence=0) -> None:
-        return self._file.seek(offset, whence)
 
     def flush(self) -> None:
         return self._file.flush()
@@ -40,5 +39,11 @@ class ZipIO(IOBase):
     def seekable(self) -> None:
         return self._file.seekable()
     
+    def seek(self, offset, whence=0) -> None:
+        return
+    
     def tell(self) -> int:
-        return self._file.tell()
+        return 0
+
+    def truncate(self, size: int | None = ...) -> int:
+        return 0
