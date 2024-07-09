@@ -2,7 +2,6 @@
 import io
 from pathlib import Path
 from zipfile import ZipFile
-from zipfile import *
 
 
 class ZipIO(io.IOBase):
