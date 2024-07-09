@@ -1,7 +1,6 @@
 import json
 import imghdr
 from zipfile import ZipFile
-from fileboxes.custom_json_config import CustomJsonEncoder, CustomJsonDecoder
 from treelib import Tree
 from collections import defaultdict
 from pathlib import Path
@@ -9,6 +8,9 @@ from io import BytesIO, StringIO, IOBase
 from PIL import Image
 from configparser import ConfigParser, MissingSectionHeaderError
 import numpy as np
+
+from fileboxes.custom_json_config import CustomJsonEncoder, CustomJsonDecoder
+from fileboxes.zipio import ZipIO
 
 
 class Filebox:
@@ -74,6 +76,9 @@ class Filebox:
     def show_file_structure(self):
         print(self._file_structure_string())
     
+    def open(self, arcname: str, mode: str = "r") -> ZipIO:
+        return ZipIO(self.path, arcname, mode)
+
     # Explicit writes
     def write_string(self, arcname: str, data: str):
         mode = "w" if self.override else "a"
