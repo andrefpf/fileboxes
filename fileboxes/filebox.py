@@ -5,7 +5,7 @@ from fileboxes.custom_json_config import CustomJsonEncoder, CustomJsonDecoder
 from treelib import Tree
 from collections import defaultdict
 from pathlib import Path
-from io import BytesIO, StringIO
+from io import BytesIO, StringIO, IOBase
 from PIL import Image
 from configparser import ConfigParser, MissingSectionHeaderError
 import numpy as np
@@ -113,6 +113,9 @@ class Filebox:
         with open(path, "r", encoding=encoding) as file:
             file_data = file.read()
         self.write_string(arcname, file_data)
+    
+    def write_file(self, arcname: str, data: IOBase):
+        self.write_string(arcname, data.read())
 
     # Explicit reads
     def read_string(self, arcname: str, encoding="utf8") -> str | None:
@@ -177,6 +180,20 @@ class Filebox:
         file_data = self.read_string(arcname, encoding=encoding)
         with open(path, "w", encoding=encoding) as file:
             file.write(file_data)
+
+    def read_file(self, arcname: str):
+        if not self.path.exists():
+            return None
+
+        with ZipFile(self.path, "r") as zip:
+            if not arcname in zip.namelist():
+                return None
+            data = zip.read(arcname)
+
+            if data is None:
+                return None
+
+            return BytesIO(data)
 
     def _file_structure_string(self):
         with ZipFile(self.path, "r") as zip:
