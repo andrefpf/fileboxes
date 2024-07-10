@@ -5,13 +5,13 @@ from zipfile import ZipFile
 
 
 class ZipIO(io.BytesIO):
-    def __init__(self, path: str | Path, arcname: str) -> None:
+    def __init__(self, path: str | Path, arcname: str, override: bool = False) -> None:
         super().__init__()
 
         self.path = Path(path)
         self.arcname = arcname
 
-        if path.exists():
+        if path.exists() and not override:
             with ZipFile(self.path, "r") as zip:
                 with zip.open(self.arcname, "r") as file:
                     self.write(file.read())

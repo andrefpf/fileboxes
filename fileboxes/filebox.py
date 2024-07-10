@@ -78,7 +78,7 @@ class Filebox:
         print(self._file_structure_string())
 
     def open(self, arcname: str) -> ZipIO:
-        return ZipIO(self.path, arcname)
+        return ZipIO(self.path, arcname, self.override)
 
     # Explicit writes
     def write_string(self, arcname: str, data: str):
