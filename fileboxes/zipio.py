@@ -13,8 +13,9 @@ class ZipIO(io.BytesIO):
 
         if path.exists() and not override:
             with ZipFile(self.path, "r") as zip:
-                with zip.open(self.arcname, "r") as file:
-                    self.write(file.read())
+                if self.arcname in zip.namelist():
+                    with zip.open(self.arcname, "r") as file:
+                        self.write(file.read())
 
     def close(self):
         with ZipFile(self.path, "w") as zip:
