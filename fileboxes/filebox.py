@@ -76,8 +76,8 @@ class Filebox:
     def show_file_structure(self):
         print(self._file_structure_string())
     
-    def open(self, arcname: str, mode: str = "r") -> ZipIO:
-        return ZipIO(self.path, arcname, mode)
+    def open(self, arcname: str) -> ZipIO:
+        return ZipIO(self.path, arcname)
 
     # Explicit writes
     def write_string(self, arcname: str, data: str):
@@ -115,7 +115,7 @@ class Filebox:
 
     def write_from_path(self, arcname: str, path: str | Path, encoding="utf8"):
         path = Path(path)
-        with open(path, "r", encoding=encoding) as file:
+        with open(path, "rb") as file:
             file_data = file.read()
         self.write_string(arcname, file_data)
     
@@ -177,13 +177,20 @@ class Filebox:
         file = BytesIO(data)
         return np.loadtxt(file, *args, delimiter=delimiter, **kwargs)
 
-    def read_to_path(self, arcname: str, path: str | Path, encoding="utf8"):
+    def read_to_path(self, arcname: str, path: str | Path):
+        if not self.path.exists():
+            return None
+        
         if not self.path.exists():
             return None
 
+        with ZipFile(self.path, "r") as zip:
+            if not arcname in zip.namelist():
+                return None
+            file_data = zip.read(arcname)
+
         path = Path(path)
-        file_data = self.read_string(arcname, encoding=encoding)
-        with open(path, "w", encoding=encoding) as file:
+        with open(path, "wb") as file:
             file.write(file_data)
 
     def read_file(self, arcname: str):

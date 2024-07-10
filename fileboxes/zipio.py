@@ -4,47 +4,20 @@ from pathlib import Path
 from zipfile import ZipFile
 
 
-class ZipIO(io.IOBase):
-    def __init__(self, path: str | Path, arcname: str, mode: str = "r") -> None:
-        self.path = path
+class ZipIO(io.BytesIO):
+    def __init__(self, path: str | Path, arcname: str) -> None:
+        super().__init__()
+
+        self.path = Path(path)
         self.arcname = arcname
-        self.mode = mode
-        self._zip = ZipFile(path, mode)
-        self._file = self._zip.open(arcname, mode)
+
+        if path.exists():
+            with ZipFile(self.path, "r") as zip:
+                with zip.open(self.arcname, "r") as file:
+                    self.write(file.read())
 
     def close(self):
+        with ZipFile(self.path, "w") as zip:
+            with zip.open(self.arcname, "w") as file:
+                file.write(self.getvalue())
         super().close()
-        self._file.close()
-        self._zip.close()
-    
-    def write(self, buffer: str | bytes) -> int:
-        if isinstance(buffer, str):
-            buffer = buffer.encode()
-        return self._file.write(buffer)
-
-    def read(self, size: int | None = None):
-        return self._file.read(size)
-
-    def readline(self) -> None:
-        return self._file.readline()
-
-    def flush(self) -> None:
-        return self._file.flush()
-    
-    def readable(self) -> None:
-        return self._file.readable()
-    
-    def writable(self) -> bool:
-        return self._file.writable()
-    
-    def seekable(self) -> None:
-        return self._file.seekable()
-    
-    def seek(self, offset, whence=0) -> None:
-        return
-    
-    def tell(self) -> int:
-        return 0
-
-    def truncate(self, size: int | None = ...) -> int:
-        return 0
