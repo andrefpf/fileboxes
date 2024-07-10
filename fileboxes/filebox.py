@@ -1,15 +1,16 @@
-import json
 import imghdr
-from zipfile import ZipFile
-from treelib import Tree
+import json
 from collections import defaultdict
-from pathlib import Path
-from io import BytesIO, StringIO, IOBase
-from PIL import Image
 from configparser import ConfigParser, MissingSectionHeaderError
-import numpy as np
+from io import BytesIO, IOBase, StringIO
+from pathlib import Path
+from zipfile import ZipFile
 
-from fileboxes.custom_json_config import CustomJsonEncoder, CustomJsonDecoder
+import numpy as np
+from PIL import Image
+from treelib import Tree
+
+from fileboxes.custom_json_config import CustomJsonDecoder, CustomJsonEncoder
 from fileboxes.zipio import ZipIO
 
 
@@ -42,7 +43,7 @@ class Filebox:
 
         if file_extension == ".json":
             return self.read_json(arcname)
-    
+
         elif file_extension in [".config", ".dat"]:
             return self.read_configparser(arcname)
 
@@ -51,7 +52,7 @@ class Filebox:
 
         else:
             return self.read_string(arcname)
-            
+
     def remove(self, arcname: str):
         buffer = dict()
         with ZipFile(self.path, "r") as zip:
@@ -75,7 +76,7 @@ class Filebox:
 
     def show_file_structure(self):
         print(self._file_structure_string())
-    
+
     def open(self, arcname: str) -> ZipIO:
         return ZipIO(self.path, arcname)
 
@@ -108,7 +109,9 @@ class Filebox:
         config_data = config_bytes_io.getvalue()
         self.write_string(arcname, config_data)
 
-    def write_array(self, arcname: str, data: np.ndarray, delimiter=";", *args, **kwargs):
+    def write_array(
+        self, arcname: str, data: np.ndarray, delimiter=";", *args, **kwargs
+    ):
         file = BytesIO()
         np.savetxt(file, data, *args, delimiter=delimiter, **kwargs)
         self.write_string(arcname, file.getvalue().decode())
@@ -118,7 +121,7 @@ class Filebox:
         with open(path, "rb") as file:
             file_data = file.read()
         self.write_string(arcname, file_data)
-    
+
     def write_file(self, arcname: str, data: IOBase):
         self.write_string(arcname, data.read())
 
@@ -163,7 +166,7 @@ class Filebox:
         config = ConfigParser()
         try:
             config.read_string(config_string)
-            return config        
+            return config
         except MissingSectionHeaderError:
             return None
 
@@ -180,7 +183,7 @@ class Filebox:
     def read_to_path(self, arcname: str, path: str | Path):
         if not self.path.exists():
             return None
-        
+
         if not self.path.exists():
             return None
 
@@ -234,16 +237,16 @@ class Filebox:
 
     def _get_image_extension(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
-            file_data= zip.read(arcname)
+            file_data = zip.read(arcname)
         file_extension = imghdr.what(None, h=file_data)
 
         if file_extension:
             return "." + file_extension
         return
-    
+
     def _get_json_extension(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
-            file_data= zip.read(arcname)
+            file_data = zip.read(arcname)
 
         try:
             json.loads(file_data)
@@ -256,7 +259,7 @@ class Filebox:
 
         if file_extension in [".png", ".jpeg"]:
             return file_extension
-        
+
         file_extension = self._get_json_extension(arcname)
         return file_extension
 
@@ -264,8 +267,7 @@ class Filebox:
     def __enter__(self):
         return self
 
-    def __exit__(self, *args, **kwargs):
-        ...
+    def __exit__(self, *args, **kwargs): ...
 
     def __contains__(self, arcname: str):
         return self.contains(arcname)

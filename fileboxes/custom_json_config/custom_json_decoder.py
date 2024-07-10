@@ -6,9 +6,9 @@ class CustomJsonDecoder(json.JSONDecoder):
         json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
 
     def object_hook(self, obj):
-        '''
+        """
         Every object enters this function during the decoding.
-        '''
+        """
         obj = self._handle_custom_keys(obj)
         obj = self._handle_custom_values(obj)
         return obj
@@ -36,15 +36,15 @@ class CustomJsonDecoder(json.JSONDecoder):
             return complex(obj["real"], obj["imag"])
         else:
             return obj
-    
+
     def _recover_key(self, key: str, key_info: dict):
         new_key = key_info.get(key, key)
         if isinstance(new_key, list):
             new_key = tuple(new_key)
         return new_key
-    
+
     def _has_custom_key(self, obj) -> bool:
         return isinstance(obj, dict) and ("__fileboxes_key_info__" in obj)
-        
+
     def _has_custom_value(self, obj) -> bool:
         return isinstance(obj, dict) and ("__fileboxes_type__" in obj)

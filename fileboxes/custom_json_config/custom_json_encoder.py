@@ -1,24 +1,25 @@
 import json
 from pprint import pprint
 
+
 class CustomJsonEncoder(json.JSONEncoder):
     def key_handler(self, key):
-        '''
+        """
         Handle custom dict keys not usually suported by JSON.
-        '''
+        """
 
         if isinstance(key, tuple):
             return str(key)
-        
+
         if isinstance(key, complex):
             return f"{key.real} + {key.imag}j"
 
         return key
 
     def value_handler(self, obj):
-        '''
+        """
         Handles custom object values not usually suported by JSON.
-        '''
+        """
         if isinstance(obj, complex):
             return {
                 "__fileboxes_type__": "complex",
@@ -28,7 +29,7 @@ class CustomJsonEncoder(json.JSONEncoder):
 
         return obj
 
-    # Everything bellow this comment is black magic. 
+    # Everything bellow this comment is black magic.
     # Be carefull 🧙.
 
     def encode(self, obj) -> str:
@@ -42,13 +43,13 @@ class CustomJsonEncoder(json.JSONEncoder):
         return super().default(obj)
 
     def _recursive_key_handler(self, obj):
-        '''
+        """
         This functions iterates recursivelly every list and dict
         to handle invalid dict keys.
-        
-        If you want to write custom key handlers checkout the 
+
+        If you want to write custom key handlers checkout the
         "key handler" function.
-        '''
+        """
 
         if isinstance(obj, list):
             new_list = [self._recursive_key_handler(v) for v in obj]
@@ -69,6 +70,6 @@ class CustomJsonEncoder(json.JSONEncoder):
                 new_dict["__fileboxes_key_info__"] = key_info
 
             return new_dict
-        
+
         else:
             return obj
