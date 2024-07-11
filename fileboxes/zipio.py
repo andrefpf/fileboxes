@@ -10,6 +10,7 @@ class ZipIO(io.BytesIO):
 
         self.path = Path(path)
         self.arcname = arcname
+        self.override = override
 
         if path.exists() and not override:
             with ZipFile(self.path, "r") as zip:
@@ -18,7 +19,8 @@ class ZipIO(io.BytesIO):
                         self.write(file.read())
 
     def close(self):
-        with ZipFile(self.path, "w") as zip:
+        mode = "w" if self.override else "a"
+        with ZipFile(self.path, mode) as zip:
             with zip.open(self.arcname, "w") as file:
                 file.write(self.getvalue())
         super().close()
