@@ -17,7 +17,9 @@ from fileboxes.zipio import ZipIO
 class Filebox:
     def __init__(self, path, override=True):
         self.path = Path(path)
-        self.override = override
+        if override:
+            with ZipFile(self.path, "w") as zip:
+                ...
 
     def write(self, arcname: str, data: dict | list | str | Image.Image):
         if isinstance(data, dict | list):
@@ -77,20 +79,15 @@ class Filebox:
     def show_file_structure(self):
         print(self._file_structure_string())
 
-    def open(self, arcname: str, mode: str | None = None) -> ZipIO:
-        if mode is None:
-            mode = "w" if self.override else "a"
+    def open(self, arcname: str, mode: str = "r") -> ZipIO:
         return ZipIO(self.path, arcname, mode)
 
     # Explicit writes
     def write_string(self, arcname: str, data: str):
-        mode = "w" if self.override else "a"
-        self.override = False
-
         if self.path.exists():
             self.remove(arcname)
 
-        with ZipFile(self.path, mode) as zip:
+        with ZipFile(self.path, "a") as zip:
             zip.writestr(arcname, data)
 
     def write_json(self, arcname: str, data: dict | list):

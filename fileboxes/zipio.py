@@ -47,6 +47,6 @@ class ZipIO(io.BytesIO):
 
     def _copy_data_to_zip(self):
         self.delete_if_exists()
-        with ZipFile(self.path, self.mode) as zip:
+        with ZipFile(self.path, "a") as zip:
             with zip.open(self.arcname, "w") as file:
                 file.write(self.getvalue())
