@@ -96,6 +96,9 @@ class Filebox:
 
     def write_image(self, arcname: str, data: Image.Image):
         image_format = data.format
+        if image_format is None:
+            image_format = "png"
+
         image_bytes_io = BytesIO()
         data.save(image_bytes_io, format=image_format)
         image_data = image_bytes_io.getvalue()
