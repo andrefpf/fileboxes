@@ -1,5 +1,5 @@
 <div align="center">
-  <img width="100" src="data/logo.png" alt="ExpiraBot Logo" align="center">
+  <img width="100" src="https://github.com/user-attachments/assets/08d8ef52-9c58-41a3-b9b8-ef53be0ee1b7" alt="ExpiraBot Logo" align="center">
 </div>
 <h1 align="center" style="margin-top: 20px;"> Fileboxes </h1>
 
