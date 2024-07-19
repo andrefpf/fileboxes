@@ -10,6 +10,3 @@ It is actually just a ZIP with a bunch of `.xml` files inside it, following the 
 I like the idea, but I do not like XML.
 
 This project is a way to write your custom file formats with zips and using a pythonic api.
-
-# Examples
-You can find multiple python notebooks with examples in the [examples folder](./examples/).
