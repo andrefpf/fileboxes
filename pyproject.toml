@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fileboxes"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["André Fernandes <fpf.andre@gmail.com>", "Rodrigo Schwartz <rodrigo32003@gmail.com>"]
 readme = "README.md"
