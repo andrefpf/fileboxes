@@ -21,7 +21,30 @@ class Filebox:
             with ZipFile(self.path, "w") as zip:
                 ...
 
-    def write(self, arcname: str, data: dict | list | str | Image.Image):
+    def write(self, arcname: str, data: dict | list | str | Image.Image | ConfigParser):
+        '''
+        Writes data inside a internal file.
+        Arcname is the path of the internal file, it may include 
+        the file extension.
+
+        According to the type of the data the method will decide
+        the correct way of writing it, according to the following scheme.
+        If it is:
+            - `dict` or `list`: json file.
+            - `Image`: png, jpeg or other available formats.
+            - `str`: simple text file.
+            - `ConfigParser`: config parser file
+        
+        If your data is not clear or could not be inferred, you may use the
+        following explicit write methods:
+            - `write_json`
+            - `write_image`
+            - `write_string`
+            - `write_configparser`
+
+        Another option is to use the method `open`
+        '''
+
         if isinstance(data, dict | list):
             return self.write_json(arcname, data)
 
@@ -37,7 +60,31 @@ class Filebox:
         else:
             raise NotImplementedError(f"Data type {type(data)} not implemented.")
 
-    def read(self, arcname: str):
+    def read(self, arcname: str) -> dict | list | str | Image.Image | ConfigParser:
+        '''
+        Reads data from an internal file.
+        Arcname is the path of the internal file, it may include 
+        the file extension.
+
+        According to the type of the file extension found in the arcname 
+        the method will decide the correct way of decoding it, according 
+        to the following scheme.
+        If it is:
+            - `.json`: json file.
+            - `.png` or `jpeg`: Image.
+            - `.config` or `.dat`: ConfigParser
+            - otherwise: string
+        
+        If you have a different extension, that could not be inferred, you
+        may use the following explicit read methods:
+            - `read_json`
+            - `read_image`
+            - `read_string`
+            - `read_configparser`
+
+        Another option is to use the method `open`
+        '''
+
         file_extension = Path(arcname).suffix
 
         if not file_extension:
@@ -55,7 +102,17 @@ class Filebox:
         else:
             return self.read_string(arcname)
 
+    def open(self, arcname: str, mode: str = "r") -> ZipIO:
+        '''
+        Opens an internal file from your filebox.
+        This works in a similar way to the builtin `open` funcion.
+        '''
+        return ZipIO(self.path, arcname, mode)
+
     def remove(self, arcname: str):
+        '''
+        Deletes a file from your filebox.
+        '''
         buffer = dict()
         with ZipFile(self.path, "r") as zip:
             if arcname not in zip.namelist():
@@ -69,6 +126,9 @@ class Filebox:
                 zip.writestr(name, data)
 
     def contains(self, arcname: str) -> bool:
+        '''
+        Checks if a arcname exists within the filebox.
+        '''
         if not self.path.exists():
             return False
 
@@ -77,10 +137,10 @@ class Filebox:
         return _contains
 
     def show_file_structure(self):
+        '''
+        Pretty way to verify the filebox internal structure.
+        '''
         print(self._file_structure_string())
-
-    def open(self, arcname: str, mode: str = "r") -> ZipIO:
-        return ZipIO(self.path, arcname, mode)
 
     # Explicit writes
     def write_string(self, arcname: str, data: str):
