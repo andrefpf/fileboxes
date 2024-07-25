@@ -56,14 +56,22 @@ class Filebox:
         else:
             return self.read_string(arcname)
 
-    def remove(self, arcname: str):
+    def remove(self, pattern: str):
+        if not pattern:
+            return
+
         buffer = dict()
         with ZipFile(self.path, "r") as zip:
-            if arcname not in zip.namelist():
-                return
             for name in zip.namelist():
-                if name != arcname:
-                    buffer[name] = zip.read(name)
+                # This allows to remove entire folders
+                if name.startswith(pattern):
+                    continue
+
+                # Verify if it matches patterns like hello/*/world
+                if Path(name).match(pattern):
+                    continue
+
+                buffer[name] = zip.read(name)
 
         with ZipFile(self.path, "w") as zip:
             for name, data in buffer.items():
