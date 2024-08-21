@@ -9,6 +9,7 @@ from zipfile import ZipFile
 import numpy as np
 from PIL import Image
 from treelib import Tree
+from hashlib import md5
 
 from fileboxes.custom_json_config import CustomJsonDecoder, CustomJsonEncoder
 from fileboxes.zipio import ZipIO
@@ -102,6 +103,7 @@ class Filebox:
         else:
             return self.read_string(arcname)
 
+
     def open(self, arcname: str, mode: str = "r") -> ZipIO:
         '''
         Opens an internal file from your filebox.
@@ -109,17 +111,25 @@ class Filebox:
         '''
         return ZipIO(self.path, arcname, mode)
 
-    def remove(self, arcname: str):
+    def remove(self, pattern: str):
         '''
         Deletes a file from your filebox.
         '''
+        if not pattern:
+            return
+
         buffer = dict()
         with ZipFile(self.path, "r") as zip:
-            if arcname not in zip.namelist():
-                return
             for name in zip.namelist():
-                if name != arcname:
-                    buffer[name] = zip.read(name)
+                # This allows to remove entire folders
+                if name.startswith(pattern):
+                    continue
+
+                # Verify if it matches patterns like hello/*/world
+                if Path(name).match(pattern):
+                    continue
+
+                buffer[name] = zip.read(name)
 
         with ZipFile(self.path, "w") as zip:
             for name, data in buffer.items():
@@ -135,6 +145,11 @@ class Filebox:
         with ZipFile(self.path, "r") as zip:
             _contains = arcname in zip.namelist()
         return _contains
+
+    def md5(self):
+        with open(self.path, "rb") as zip:
+            md5_hash = md5(zip.read())
+        return md5_hash.hexdigest()
 
     def show_file_structure(self):
         '''
@@ -333,3 +348,8 @@ class Filebox:
 
     def __contains__(self, arcname: str):
         return self.contains(arcname)
+
+    def __eq__(self, other: 'Filebox') -> bool:
+        if not isinstance(other, Filebox):
+            return False
+        return self.md5() == other.md5()
