@@ -1,5 +1,6 @@
 import json
 from pprint import pprint
+import numpy as np
 
 
 class CustomJsonEncoder(json.JSONEncoder):
@@ -7,6 +8,12 @@ class CustomJsonEncoder(json.JSONEncoder):
         """
         Handle custom dict keys not usually suported by JSON.
         """
+
+        if isinstance(key, np.integer):
+            return int(key)
+
+        if isinstance(key, np.floating):
+            return float(key)
 
         if isinstance(key, tuple):
             return str(key)
