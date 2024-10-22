@@ -41,12 +41,12 @@ class ZipIO(io.BytesIO):
     def _copy_data_from_zip(self):
         with ZipFile(self.path, "r") as zip:
             if self.arcname in zip.namelist():
-                with zip.open(self.arcname, "r") as file:
+                with zip.open(self.arcname, "r", force_zip64=True) as file:
                     self.write(file.read())
                     self.seek(0)
 
     def _copy_data_to_zip(self):
         self.delete_if_exists()
         with ZipFile(self.path, "a") as zip:
-            with zip.open(self.arcname, "w") as file:
+            with zip.open(self.arcname, "w", force_zip64=True) as file:
                 file.write(self.getvalue())
