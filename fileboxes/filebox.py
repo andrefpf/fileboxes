@@ -1,4 +1,3 @@
-import imghdr
 import json
 from collections import defaultdict
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -313,13 +312,7 @@ class Filebox:
         return str(tree)
 
     def _get_image_extension(self, arcname: str) -> str:
-        with ZipFile(self.path, "r") as zip:
-            file_data = zip.read(arcname)
-        file_extension = imghdr.what(None, h=file_data)
-
-        if file_extension:
-            return "." + file_extension
-        return
+        return Path(arcname).suffix
 
     def _get_json_extension(self, arcname: str) -> str:
         with ZipFile(self.path, "r") as zip:
